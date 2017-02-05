@@ -3,6 +3,8 @@ package gomonzo
 import (
 	"fmt"
 
+	"time"
+
 	"github.com/0xdeafcafe/gomonzo/helpers"
 	"github.com/0xdeafcafe/gomonzo/models"
 )
@@ -39,5 +41,8 @@ func (monzo *GoMonzo) RequestAccessToken(code string) (*models.Token, *models.Mo
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// Minus 10 seconds for possible issues when checking if token as expired
+	token.ExpiresAt = time.Now().UTC().Add(time.Duration(token.ExpiresIn-10) * time.Second)
 	return &token, nil, nil
 }
