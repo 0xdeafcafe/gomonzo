@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-// Token holds the monzo response for creating or refreshing a token
+// Token defines the structure of a Monzo Token
 type Token struct {
 	AccessToken  string    `json:"access_token"`
 	ClientID     string    `json:"client_id"`
