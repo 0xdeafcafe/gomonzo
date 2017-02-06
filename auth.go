@@ -31,7 +31,7 @@ func (monzo *GoMonzo) RequestAccessToken(code string) (*models.Token, *models.Mo
 		"code":          code,
 	}
 
-	resp, monzoError, err := monzo.httpHelper.PostForm(requestAccessTokenURL, make(map[string]string), form)
+	resp, monzoError, err := monzo.httpHelper.Post(requestAccessTokenURL, make(map[string]string), form, nil)
 	if monzoError != nil || err != nil {
 		return nil, monzoError, err
 	}
@@ -45,4 +45,39 @@ func (monzo *GoMonzo) RequestAccessToken(code string) (*models.Token, *models.Mo
 	// Minus 10 seconds for possible issues when checking if token as expired
 	token.ExpiresAt = time.Now().UTC().Add(time.Duration(token.ExpiresIn-10) * time.Second)
 	return &token, nil, nil
+}
+
+// RefreshAuthentication refreshes authentication by requesting a new access and refresh
+// token.
+func (monzo *GoMonzo) RefreshAuthentication(token *models.Token) (*models.Token, *models.MonzoError, error) {
+	form := map[string]string{
+		"grant_type":    "refresh_token",
+		"client_id":     monzo.options.ClientID,
+		"client_secret": monzo.options.ClientSecret,
+		"refresh_token": token.RefreshToken,
+	}
+
+	resp, monzoError, err := monzo.httpHelper.Post(requestAccessTokenURL, make(map[string]string), form, nil)
+	if monzoError != nil || err != nil {
+		return nil, monzoError, err
+	}
+
+	var newToken models.Token
+	err = helpers.UnmarshalJSON(resp.Body, &newToken)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Minus 10 seconds for possible issues when checking if token as expired
+	newToken.ExpiresAt = time.Now().UTC().Add(time.Duration(newToken.ExpiresIn-10) * time.Second)
+	return &newToken, nil, nil
+}
+
+// RefreshAuthenticationIfNeeded checks of the token has expired, and if it has
+func (monzo *GoMonzo) RefreshAuthenticationIfNeeded(token *models.Token) (*models.Token, *models.MonzoError, error) {
+	if time.Now().UTC().After(token.ExpiresAt) {
+		return monzo.RefreshAuthentication(token)
+	}
+
+	return token, nil, nil
 }
