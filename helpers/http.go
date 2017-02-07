@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"encoding/json"
-	"io/ioutil"
 
 	"github.com/0xdeafcafe/gomonzo/models"
 )
@@ -62,15 +61,9 @@ func (helper HTTPHelper) makeRequest(method, endpoint string, params map[string]
 	}
 
 	if strings.Contains(resp.Header.Get("Content-Type"), "application/json") {
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return nil, nil, err
-		}
-
 		var monzoError models.MonzoError
-		json.Unmarshal(body, &monzoError)
-		return nil, &monzoError, errors.New(monzoError.Error)
+		UnmarshalJSON(resp.Body, &monzoError)
+		return nil, &monzoError, errors.New(monzoError.Code)
 	}
 
 	return resp, nil, errors.New(resp.Status)
