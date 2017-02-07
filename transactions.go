@@ -2,6 +2,7 @@ package gomonzo
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/0xdeafcafe/gomonzo/helpers"
 	"github.com/0xdeafcafe/gomonzo/models"
@@ -11,6 +12,28 @@ const (
 	getTransactionURL   = "transactions/%s"
 	listTransactionsURL = "transactions"
 )
+
+// ListTransactionsSince gets all the transactions in an account since a certain time
+func (monzo *GoMonzo) ListTransactionsSince(token *models.Token, accountID string, since time.Time) (*models.Transactions, *models.MonzoError, error) {
+	params := map[string]string{
+		"account_id": accountID,
+		"expand[]":   "merchant",
+		"since":      since.Format(time.RFC3339),
+	}
+
+	resp, monzoError, err := monzo.httpHelper.Get(listTransactionsURL, params, token)
+	if monzoError != nil || err != nil {
+		return nil, monzoError, err
+	}
+
+	var transactions *models.Transactions
+	err = helpers.UnmarshalJSON(resp.Body, &transactions)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return transactions, nil, nil
+}
 
 // ListTransactions gets all the transactions in an account
 func (monzo *GoMonzo) ListTransactions(token *models.Token, accountID string) (*models.Transactions, *models.MonzoError, error) {
