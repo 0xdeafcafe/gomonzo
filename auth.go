@@ -74,10 +74,10 @@ func (monzo *GoMonzo) RefreshAuthentication(token *models.Token) (*models.Token,
 }
 
 // RefreshAuthenticationIfNeeded checks of the token has expired, and if it has
-func (monzo *GoMonzo) RefreshAuthenticationIfNeeded(token *models.Token) (*models.Token, *models.MonzoError, error) {
+func (monzo *GoMonzo) RefreshAuthenticationIfNeeded(token *models.Token) (*models.Token, bool, *models.MonzoError, error) {
 	if time.Now().UTC().After(token.ExpiresAt) {
-		return monzo.RefreshAuthentication(token)
+		token, monzoErr, err := monzo.RefreshAuthentication(token)
+		return token, true, monzoErr, err
 	}
-
-	return token, nil, nil
+	return token, false, nil, nil
 }
