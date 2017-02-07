@@ -35,17 +35,24 @@ func (monzo *GoMonzo) ListTransactions(token *models.Token, accountID string) (*
 
 // GetTransaction gets a transaction by it's ID
 func (monzo *GoMonzo) GetTransaction(token *models.Token, transactionID string) (*models.Transaction, *models.MonzoError, error) {
+	params := map[string]string{
+		"expand[]": "merchant",
+	}
+
 	url := fmt.Sprintf(getTransactionURL, transactionID)
-	resp, monzoError, err := monzo.httpHelper.Get(url, nil, token)
+	resp, monzoError, err := monzo.httpHelper.Get(url, params, token)
 	if monzoError != nil || err != nil {
 		return nil, monzoError, err
 	}
 
-	var transaction *models.Transaction
-	err = helpers.UnmarshalJSON(resp.Body, &transaction)
+	var container = &struct {
+		Transaction *models.Transaction `json:"transaction"`
+	}{}
+	err = helpers.UnmarshalJSON(resp.Body, container)
+	fmt.Println(container)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return transaction, nil, nil
+	return container.Transaction, nil, nil
 }
